@@ -1,0 +1,4 @@
+SHELL=/bin/zsh
+TZ=America/Los_Angeles
+
+28 4 * * * cd /home/kopi/dev/download_stock_daily_data && /usr/bin/zsh /home/kopi/dev/download_stock_daily_data/run.sh >>/home/kopi/dev/download_stock_daily_data/log.txt 2>&1

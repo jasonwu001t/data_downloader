@@ -9,6 +9,7 @@ cron.txt
 run.sh
 test.py
 test2.py
+.DS_Store
 
 # Distribution / packaging
 .Python

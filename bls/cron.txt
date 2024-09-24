@@ -1,3 +1,0 @@
-SHELL=/bin/zsh
-
-* * * * * /Users/jwu/anaconda3/bin/python3 /Users/jwu/Desktop/test_folder/projects/bls/downloader.py >>//Users/jwu/Desktop/test_folder/projects/us_treasury_curve/log.txt 2>&1

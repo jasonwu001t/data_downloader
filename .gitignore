@@ -5,6 +5,10 @@ __pycache__/
 
 # C extensions
 *.so
+cron.txt
+run.sh
+test.py
+test2.py
 
 # Distribution / packaging
 .Python

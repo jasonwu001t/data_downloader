@@ -35,7 +35,7 @@ bls.update_historical_data(series_info, file_format="json")
 # Data processing and saving to S3
 data_files = ['unemployment_rate', 'nonfarm_payroll', 'us_avg_weekly_hours', 'us_job_opening']
 bucket_name = 'jtrade1-dir'
-s3_folder = 'api'
+s3_folder = 'api/bls'
 
 for data_file in data_files:
     local_path = f'{data_dir}/{data_file}.json'

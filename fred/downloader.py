@@ -1,8 +1,10 @@
 import json
 import pandas as pd
-from TAI.source import Fred  # Assuming the Fred class is saved in a file called FredClass.py
+# Assuming the Fred class is saved in a file called FredClass.py
+from TAI.source import Fred
 from TAI.data import DataMaster
 from datetime import datetime
+
 
 class FredToJson:
     def __init__(self):
@@ -85,17 +87,40 @@ class FredToJson:
             "description": description,
             "chartData": json_data,
         }]
-        
+
         return json_structure
 
-    def save_to_json(self, filename, data):
-        self.dm.save_local(data, 'data', filename,
-                    delete_local=False)
-        self.dm.save_s3(data,  'jtrade1-dir', 'api/fred',
-                    filename, use_polars=False, delete_local=True)
+    def filter_yearly_data(self, data):
+        current_year = datetime.now().year
+        five_years_ago = current_year - 4
 
-        # with open(filename, 'w') as json_file:
-        #     json.dump(data, json_file, indent=4)
+        yearly_data = []
+        for item in data:
+            chart_data = item['chartData']
+            yearly_points = {}
+            for point in chart_data:
+                year = int(point['date'][:4])
+                if year >= five_years_ago:
+                    yearly_points[year] = point
+
+            item['chartData'] = list(yearly_points.values())
+            yearly_data.append(item)
+        return yearly_data
+
+    def save_to_json(self, filename, data):
+        # Save full dataset
+        self.dm.save_local(data, 'data', filename, delete_local=False)
+        self.dm.save_s3(data, 'jtrade1-dir', 'api/fred',
+                        filename, use_polars=False, delete_local=True)
+
+        # Create and save short dataset
+        json_short = self.filter_yearly_data(data)
+        short_filename = f"short_{filename}"
+        self.dm.save_local(json_short, 'data',
+                           short_filename, delete_local=False)
+        self.dm.save_s3(json_short, 'jtrade1-dir', 'api/fred_short',
+                        short_filename, use_polars=False, delete_local=True)
+
 
 if __name__ == "__main__":
     print('PROCESS STARTS AT : {}'.format(datetime.now()))
@@ -106,5 +131,5 @@ if __name__ == "__main__":
         json_data = fred_to_json.create_json_data(series)
         filename = f"{series}.json"
         fred_to_json.save_to_json(filename, json_data)
-        print(f"{filename} saved successfully.")
+        print(f"{filename} saved successfully (full and short versions).")
     print('PROCESS ENDS AT : {}'.format(datetime.now()))

@@ -35,7 +35,28 @@ bucket_name = 'jtrade1-dir'
 s3_folder = 'api/bls'
 
 
+def filter_yearly_data(data):
+    current_year = datetime.now().year
+    # We want the current year plus 4 previous years
+    five_years_ago = current_year - 4
+
+    yearly_data = []
+    for item in data:
+        chart_data = item['chartData']
+        yearly_points = {}
+        for point in chart_data:
+            # Extract year from date string and convert to int
+            year = int(point['date'][:4])
+            if year >= five_years_ago:
+                yearly_points[year] = point
+
+        item['chartData'] = list(yearly_points.values())
+        yearly_data.append(item)
+    return yearly_data
+
+
 agg_data = []
+agg_data_short = []
 for idx, data_file in enumerate(data_files, start=1):
     output_data = []
     # print('dddddddd', idx, data_file)
@@ -57,14 +78,27 @@ for idx, data_file in enumerate(data_files, start=1):
 
     output_data.append(output_entry)
     agg_data.append(output_entry)
+    agg_data_short.append(filter_yearly_data([output_entry])[0])
 
+    # Save full version
     dm.save_local(output_data, data_dir, f'{data_file}.json', use_polars=False)
     dm.save_s3(output_data, bucket_name, s3_folder,
                f'{data_file}.json', use_polars=False, delete_local=True)
+
+    # Save short version
+    short_data = filter_yearly_data(output_data)
+    dm.save_local(short_data, data_dir,
+                  f'{data_file}_short.json', use_polars=False)
+    dm.save_s3(short_data, bucket_name, f'{s3_folder}_short',
+               f'{data_file}_short.json', use_polars=False, delete_local=True)
 
 # # Save the restructured data to S3
 # restructured_data = json.dumps(output_data, indent=2)
 dm.save_s3(agg_data, bucket_name, s3_folder,
            'bls_data.json', use_polars=False, delete_local=False)
+
+# Save the short dataset to S3
+dm.save_s3(agg_data_short, bucket_name, 'api/bls_short',
+           'bls_data_short.json', use_polars=False, delete_local=False)
 
 print('PROCESS ENDS AT : {}'.format(datetime.now()))
